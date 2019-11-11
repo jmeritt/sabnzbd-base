@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: sabnzbd
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: sabnzbd.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: sabnzbd
+          servicePort: 8080
+  

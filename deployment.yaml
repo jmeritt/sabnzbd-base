@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sabnzbd
+  labels:
+    app: sabnzbd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sabnzbd
+  template:
+    metadata:
+      labels:
+        app: sabnzbd
+    spec:
+      initContainers:
+      - name: copy-config
+        image: busybox
+        command: ['/bin/sh', '-c', 'cp /config-src/*.ini /config/sabnzbd.ini']
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: config-src
+          mountPath: /config-src
+      - name: init-priveleges-config
+        image: busybox
+        command:
+        - chown
+        - -R
+        - 2580:2580
+        - /config
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      containers:
+      - name: sabnzbd
+        image: jmeritt/sabnzbd
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "300Mi"
+          limits:
+            cpu: "300m"
+            memory: "512Mi"
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: downloads
+          mountPath: /downloads
+      volumes:
+      - name: config
+        emptyDir: {}
+      - name: config-src
+        configMap: 
+          name: sabnzbd-config
+      - name: downloads
+        emptyDir: {}
